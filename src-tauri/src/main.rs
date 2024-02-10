@@ -1,15 +1,31 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+use tauri::*;
 
 fn main() {
+    let tray_menu = SystemTrayMenu::new()
+        .add_item(CustomMenuItem::new("quit".to_string(), "Quit"))
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(CustomMenuItem::new("hide".to_string(), "Hide"));
+    let tray = SystemTray::new().with_menu(tray_menu);
+
+    // On close, hide to try, work in the background
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .system_tray(tray)
+        .on_window_event(|event| match event.event() {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                event.window().hide().unwrap();
+                api.prevent_close();
+            }
+            _ => {}
+        })
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| match event {
+            tauri::RunEvent::ExitRequested { api, .. } => {
+                api.prevent_exit();
+            }
+            _ => {}
+        });
 }
