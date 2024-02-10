@@ -3,6 +3,12 @@
 
 use tauri::*;
 
+// Next:
+// - dev - sys tray quit
+// - check if drive running
+// - show error window when drive not running
+// - 
+
 fn main() {
     let tray_menu = SystemTrayMenu::new()
         .add_item(CustomMenuItem::new("quit".to_string(), "Quit"))
@@ -20,6 +26,19 @@ fn main() {
             }
             _ => {}
         })
+        // Show/hide main window when tray icon left clicked
+		.on_system_tray_event(|app, event| match event {
+			SystemTrayEvent::LeftClick { position: _, size: _, .. } => {
+				let window = app.get_window("main").unwrap();
+				if window.is_visible().unwrap() {
+					window.hide().unwrap();
+				} else {
+					window.show().unwrap();
+					window.set_focus().unwrap();
+				}
+			}
+            _ => {}
+		})
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app_handle, event| match event {
