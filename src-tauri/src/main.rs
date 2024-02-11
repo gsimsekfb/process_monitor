@@ -12,8 +12,6 @@ use tauri::*;
 fn main() {
     let tray_menu = SystemTrayMenu::new()
         .add_item(CustomMenuItem::new("quit".to_string(), "Quit"))
-        .add_native_item(SystemTrayMenuItem::Separator)
-        .add_item(CustomMenuItem::new("hide".to_string(), "Hide"));
     let tray = SystemTray::new().with_menu(tray_menu);
 
     // On close, hide to try, work in the background
@@ -36,7 +34,15 @@ fn main() {
 					window.show().unwrap();
 					window.set_focus().unwrap();
 				}
-			}
+			},
+            SystemTrayEvent::MenuItemClick { id, .. } => {
+                match id.as_str() {
+                  "quit" => {
+                    std::process::exit(0);
+                  }
+                  _ => {}
+                }
+            }            
             _ => {}
 		})
         .build(tauri::generate_context!())
