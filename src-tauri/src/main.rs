@@ -6,16 +6,18 @@ use tauri::*;
 // Next:
 // - dev - sys tray quit
 // - check if drive running
+//   . Hide/unhide main win in a loop https://docs.rs/tauri/latest/tauri/struct.App.html#method.run_iteration
+//   . /Users/gsimsek/code/rust/systats-rs/src-tauri/src/monitors/cpu.rs
 // - show error window when drive not running
 // - 
 
 fn main() {
     let tray_menu = SystemTrayMenu::new()
-        .add_item(CustomMenuItem::new("quit".to_string(), "Quit"))
+        .add_item(CustomMenuItem::new("quit".to_string(), "Quit"));
     let tray = SystemTray::new().with_menu(tray_menu);
 
     // On close, hide to try, work in the background
-    tauri::Builder::default()
+    let mut app = tauri::Builder::default()
         .system_tray(tray)
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {
@@ -37,20 +39,28 @@ fn main() {
 			},
             SystemTrayEvent::MenuItemClick { id, .. } => {
                 match id.as_str() {
-                  "quit" => {
-                    std::process::exit(0);
-                  }
+                  "quit" => { std::process::exit(0); }
                   _ => {}
                 }
-            }            
+            }
             _ => {}
 		})
         .build(tauri::generate_context!())
-        .expect("error while building tauri application")
-        .run(|_app_handle, event| match event {
-            tauri::RunEvent::ExitRequested { api, .. } => {
-                api.prevent_exit();
-            }
-            _ => {}
-        });
+        .expect("error while building tauri application");
+
+    loop {
+        let iteration = app.run_iteration();
+
+        let process = "GoogleDriveFS";
+        let sys = sysinfo::System::new_all();
+        let drive_processes: Vec<&sysinfo::Process> 
+            = sys.processes_by_name(&process).collect();
+        if drive_processes.len() == 0 { // todo: 6 ?
+            app.get_window("main").unwrap().show().unwrap(); 
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(1000));
+
+        if iteration.window_count == 0 { break; }
+    }    
 }
