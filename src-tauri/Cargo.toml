@@ -13,7 +13,8 @@ edition = "2021"
 tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = ["shell-open", "system-tray"] }
+chrono = "0.4.34"   
+tauri = { version = "1.5", features = [ "window-set-title", "shell-open", "system-tray"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sysinfo = "0.30.5"

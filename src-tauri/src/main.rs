@@ -4,12 +4,11 @@
 use tauri::*;
 
 // Next:
-// - dev - sys tray quit
-// - check if drive running
-//   . Hide/unhide main win in a loop https://docs.rs/tauri/latest/tauri/struct.App.html#method.run_iteration
-//   . /Users/gsimsek/code/rust/systats-rs/src-tauri/src/monitors/cpu.rs
-// - show error window when drive not running
+// - macos not working at all
 // - 
+// Cheatsheet:
+// cargo tauri build -t x86_64-pc-windows-msvc
+// 
 
 fn main() {
     let tray_menu = SystemTrayMenu::new()
@@ -55,11 +54,22 @@ fn main() {
         let sys = sysinfo::System::new_all();
         let drive_processes: Vec<&sysinfo::Process> 
             = sys.processes_by_name(&process).collect();
-        if drive_processes.len() == 0 { // todo: 6 ?
+        if drive_processes.len() != 7 { // win10
             app.get_window("main").unwrap().show().unwrap(); 
         }
 
+        let count = drive_processes.len().to_string();
+        let count = count.as_str();
+        let local = chrono::offset::Local::now();
+        let time = local.to_rfc2822();
+
+        app.get_window("main").unwrap().set_title(
+            format!("number_of_drive_processes: {count} --- {time}").as_str()
+        );
+
         std::thread::sleep(std::time::Duration::from_millis(1000));
+        // std::thread::sleep(std::time::Duration::from_millis(200));
+            // Dev: 200, Rel: 1000
 
         if iteration.window_count == 0 { break; }
     }    
